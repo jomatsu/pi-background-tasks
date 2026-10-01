@@ -479,6 +479,8 @@ export interface PiSimpleStreamOptions {
   readonly timeoutMs?: number;
   readonly maxRetries?: number;
   readonly temperature?: number;
+  /** Mirrors pi-ai's Anthropic option; Opus 5+ defaults to "omitted" when absent. */
+  readonly thinkingDisplay?: 'summarized' | 'omitted';
   readonly cacheRetention?: CacheRetention;
   readonly sessionId?: string;
   readonly env?: ProviderEnv;
@@ -2195,6 +2197,9 @@ function buildAnthropicRequest(
   if (options?.toolChoice !== undefined)
     params['tool_choice'] = canonicalizeJson(options.toolChoice);
   const reasoning = options?.reasoning;
+  // Pi sends display:"summarized" unless configured otherwise; keep that contract here,
+  // or Claude Opus 5+ silently returns signature-only (empty) thinking blocks.
+  const display = options?.thinkingDisplay ?? 'summarized';
   if (model.reasoning && reasoning !== undefined) {
     if (reasoning === 'off') {
       if (policy.enforcesThinkingPrefixBinding) {
@@ -2205,6 +2210,7 @@ function buildAnthropicRequest(
     } else if (policy.thinkingPolicy === 'adaptive-effort') {
       params['thinking'] = {
         type: 'adaptive',
+        display,
         ...(policy.enforcesThinkingPrefixBinding
           ? { block_binding: { prefix_mismatch_behavior: 'error' } }
           : {}),
@@ -2214,11 +2220,13 @@ function buildAnthropicRequest(
       params['thinking'] = {
         type: 'enabled',
         budget_tokens: thinkingBudgetFor(reasoning, maxTokens, options?.thinkingBudgets),
+        display,
       };
     }
   } else if (policy.enforcesThinkingPrefixBinding) {
     params['thinking'] = {
       type: 'adaptive',
+      display,
       block_binding: { prefix_mismatch_behavior: 'error' },
     };
   } else {

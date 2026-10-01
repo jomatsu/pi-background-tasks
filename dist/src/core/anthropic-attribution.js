@@ -1358,6 +1358,9 @@ function buildAnthropicRequest(model, context, options) {
     if (options?.toolChoice !== undefined)
         params['tool_choice'] = canonicalizeJson(options.toolChoice);
     const reasoning = options?.reasoning;
+    // Pi sends display:"summarized" unless configured otherwise; keep that contract here,
+    // or Claude Opus 5+ silently returns signature-only (empty) thinking blocks.
+    const display = options?.thinkingDisplay ?? 'summarized';
     if (model.reasoning && reasoning !== undefined) {
         if (reasoning === 'off') {
             if (policy.enforcesThinkingPrefixBinding) {
@@ -1369,6 +1372,7 @@ function buildAnthropicRequest(model, context, options) {
         else if (policy.thinkingPolicy === 'adaptive-effort') {
             params['thinking'] = {
                 type: 'adaptive',
+                display,
                 ...(policy.enforcesThinkingPrefixBinding
                     ? { block_binding: { prefix_mismatch_behavior: 'error' } }
                     : {}),
@@ -1379,12 +1383,14 @@ function buildAnthropicRequest(model, context, options) {
             params['thinking'] = {
                 type: 'enabled',
                 budget_tokens: thinkingBudgetFor(reasoning, maxTokens, options?.thinkingBudgets),
+                display,
             };
         }
     }
     else if (policy.enforcesThinkingPrefixBinding) {
         params['thinking'] = {
             type: 'adaptive',
+            display,
             block_binding: { prefix_mismatch_behavior: 'error' },
         };
     }

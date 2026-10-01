@@ -189,7 +189,7 @@ void describe('global Anthropic attribution extension', () => {
         const serialized: unknown = JSON.parse(JSON.stringify(params));
         assert.ok(isJsonObject(serialized));
         assert.equal(serialized['model'], modelId);
-        assert.deepEqual(serialized['thinking'], { type: 'adaptive' });
+        assert.deepEqual(serialized['thinking'], { type: 'adaptive', display: 'summarized' });
         assert.deepEqual(serialized['output_config'], { effort: reasoning });
       });
     }
@@ -263,7 +263,7 @@ void describe('global Anthropic attribution extension', () => {
       assert.equal(result.stopReason, 'stop', result.errorMessage);
       assert.ok(captured);
       assert.equal(captured['model'], modelId);
-      assert.deepEqual(captured['thinking'], { type: 'adaptive' });
+      assert.deepEqual(captured['thinking'], { type: 'adaptive', display: 'summarized' });
       assert.deepEqual(captured['output_config'], { effort: 'max' });
       assert.equal(captured['diagnostics'], undefined);
       assert.equal(beta, ADAPTIVE_200K_SUBSCRIPTION_BETA);
@@ -483,6 +483,7 @@ void describe('global Anthropic attribution extension', () => {
     assert.equal(serialized.includes('ZAI summary 😀'), true);
     assert.deepEqual(params['thinking'], {
       type: 'adaptive',
+      display: 'summarized',
       block_binding: { prefix_mismatch_behavior: 'error' },
     });
   });
