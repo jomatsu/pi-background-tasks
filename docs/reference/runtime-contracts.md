@@ -63,7 +63,7 @@ This generated registry lists production environment-variable references, runtim
 | `path` | read | `src/core/common.ts:963` |
 | `Path` | read | `src/core/common.ts:963` |
 | `PATH` | read | `src/core/common.ts:1017`<br>`src/core/common.ts:963`<br>`src/core/pi-launch.ts:425` |
-| `PI_ANTHROPIC_ACCOUNT_CONFIG_PATH` | read | `src/core/anthropic-attribution.ts:1054` |
+| `PI_ANTHROPIC_ACCOUNT_CONFIG_PATH` | read | `src/core/anthropic-attribution.ts:1056` |
 | `PI_API_BASE_URL` | remove | `src/core/attested-pi-run.ts:248`<br>`src/core/fusion/pi-child.ts:100` |
 | `PI_API_KEY` | remove | `src/core/attested-pi-run.ts:248`<br>`src/core/fusion/pi-child.ts:100` |
 | `PI_AUTH_FILE` | remove | `src/core/attested-pi-run.ts:248`<br>`src/core/fusion/pi-child.ts:100` |
@@ -73,29 +73,29 @@ This generated registry lists production environment-variable references, runtim
 | `PI_BG_DELEGATE_SEED_SHA256` | read, write | `src/core/delegate/launch.ts:355`<br>`src/delegate-child-extension.ts:386` |
 | `PI_BG_DELEGATE_TASK_ID` | read, write | `src/core/delegate/launch.ts:356`<br>`src/delegate-child-extension.ts:387` |
 | `PI_BG_DISABLE_PI_TELEMETRY` | read | `src/core/registry.ts:271` |
-| `PI_BG_DISABLE_UPDATE_CHECK` | read | `src/extension.ts:656` |
+| `PI_BG_DISABLE_UPDATE_CHECK` | read | `src/extension.ts:661` |
 | `PI_BG_DOCK_SHORTCUT` | read | `src/core/config.ts:113` |
 | `PI_BG_FEATURES` | read | `src/core/config.ts:112` |
 | `PI_BG_MAX_OUTPUT_BYTES` | read | `src/core/registry.ts:78` |
 | `PI_BG_POSIX_SHELL` | read | `src/core/common.ts:1085` |
 | `PI_BG_POSIX_SHELL_PATH` | read | `src/core/common.ts:1095` |
-| `PI_BG_REGISTRY_URL` | read | `src/extension.ts:665` |
+| `PI_BG_REGISTRY_URL` | read | `src/extension.ts:670` |
 | `PI_BG_SHELL` | read | `src/core/common.ts:1042` |
 | `PI_BG_SHELL_PATH` | read | `src/core/common.ts:1043` |
-| `PI_CACHE_RETENTION` | read, write | `src/core/anthropic-attribution.ts:819`<br>`src/core/anthropic-attribution.ts:830`<br>`src/core/fusion/claude-cache.ts:57`<br>`src/core/fusion/pi-child.ts:273`<br>`src/core/fusion/pi-child.ts:274` |
+| `PI_CACHE_RETENTION` | read, write | `src/core/anthropic-attribution.ts:821`<br>`src/core/anthropic-attribution.ts:832`<br>`src/core/fusion/claude-cache.ts:57`<br>`src/core/fusion/pi-child.ts:273`<br>`src/core/fusion/pi-child.ts:274` |
 | `PI_FUSION_CANDIDATE_OUTPUT_RECOVERY_PATH` | read, remove, write | `src/core/fusion/pi-child.ts:100`<br>`src/core/fusion/pi-child.ts:1879`<br>`src/fusion-child-extension.ts:599` |
 | `PI_FUSION_RESEARCH_ENABLED` | read, remove, write | `src/core/fusion/pi-child.ts:100`<br>`src/core/fusion/pi-child.ts:1902`<br>`src/fusion-child-extension.ts:608` |
 | `PI_FUSION_SOURCE_POLICY_PATH` | read, remove, write | `src/core/fusion/pi-child.ts:100`<br>`src/core/fusion/pi-child.ts:1903`<br>`src/fusion-child-extension.ts:555` |
 | `PI_FUSION_SOURCE_POLICY_SHA256` | read, remove, write | `src/core/fusion/pi-child.ts:100`<br>`src/core/fusion/pi-child.ts:1904`<br>`src/fusion-child-extension.ts:556` |
 | `PI_FUSION_TOOL_CALL_LOG_PATH` | read, remove, write | `src/core/fusion/pi-child.ts:100`<br>`src/core/fusion/pi-child.ts:1891`<br>`src/fusion-child-extension.ts:598` |
 | `PI_MODEL` | remove | `src/core/delegate/launch.ts:330`<br>`src/core/fusion/pi-child.ts:100` |
-| `PI_OFFLINE` | read | `src/extension.ts:657` |
+| `PI_OFFLINE` | read | `src/extension.ts:662` |
 | `PI_PROVIDER` | remove | `src/core/delegate/launch.ts:330`<br>`src/core/fusion/pi-child.ts:100` |
 | `PI_REASONING_LEVEL` | remove | `src/core/delegate/launch.ts:330`<br>`src/core/fusion/pi-child.ts:100` |
 | `PI_SESSION_FILE` | remove | `src/core/delegate/launch.ts:330`<br>`src/core/fusion/pi-child.ts:100` |
 | `PI_SESSION_ID` | remove | `src/core/delegate/launch.ts:330`<br>`src/core/fusion/pi-child.ts:100` |
 | `PI_SKIP_VERSION_CHECK` | write | `src/core/delegate/launch.ts:352`<br>`src/core/fusion/pi-child.ts:272` |
-| `PIPELINE_ANTHROPIC_ATTRIBUTION_AUDIT_PATH` | read | `src/core/anthropic-attribution.ts:1333` |
+| `PIPELINE_ANTHROPIC_ATTRIBUTION_AUDIT_PATH` | read | `src/core/anthropic-attribution.ts:1335` |
 | `SHELL` | read | `src/core/common.ts:1102` |
 | `SystemRoot` | read | `src/core/windows-taskkill.ts:96` |
 | `WINDIR` | read | `src/core/windows-taskkill.ts:101` |
