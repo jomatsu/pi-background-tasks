@@ -173,21 +173,20 @@ const loader = new sdk.DefaultResourceLoader({
   noContextFiles: true,
   noThemes: true,
 });
-// Shell guidance rides on bg_run's promptGuidelines (base system prompt), not a
-// before_agent_start hook: that hook is skipped for sendMessage({triggerTurn})
-// turns (earendil-works/pi#5581), which flipped the system prompt around every
-// completion notification and invalidated the provider prompt cache.
+// Shell guidance rides on bg_run's tool description, not promptGuidelines (Pi drops
+// those under a custom system prompt) or a before_agent_start hook (skipped for
+// sendMessage({triggerTurn}) turns, earendil-works/pi#5581, which flipped the system
+// prompt around every completion notification and invalidated the prompt cache).
 async function checkPackedShellGuidance(loaded) {
   assert.deepEqual(loaded.errors, []);
   const background = loaded.extensions.find((extension) => extension.tools.has('bg_status'));
   assert.ok(background, 'background public tool registration must remain intact');
   assert.equal(background.handlers.get('before_agent_start'), undefined);
   const bgRun = background.tools.get('bg_run');
-  const guidelines = (bgRun.definition ?? bgRun).promptGuidelines;
-  assert.ok(Array.isArray(guidelines));
-  const shellLines = guidelines.filter((line) => /activation shell policy/u.test(line));
-  assert.equal(shellLines.length, 1);
-  assert.doesNotMatch(guidelines.join('\n'), /pi_background_shell_policy/u);
+  const definition = bgRun.definition ?? bgRun;
+  assert.match(definition.description, /Shell policy for bg_run commands:\n.*activation shell policy/su);
+  assert.doesNotMatch((definition.promptGuidelines ?? []).join('\n'), /activation shell policy/u);
+  assert.doesNotMatch(definition.description, /pi_background_shell_policy/u);
 }
 let session;
 try {

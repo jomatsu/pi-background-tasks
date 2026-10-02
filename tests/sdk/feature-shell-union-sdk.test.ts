@@ -208,10 +208,12 @@ function unionPeerAndProviderExtension(
       ],
       streamSimple(_model: Model<Api>, context: Context): AssistantMessageEventStream {
         const prompt = effectiveSystemPrompt(context);
+        // The shell policy rides on the bg_run tool description, not the system prompt.
+        const visible = [prompt, ...(context.tools ?? []).map((tool) => tool.description ?? '')].join('\n');
         observations.push({
-          guidance: guidanceFrom(prompt),
+          guidance: guidanceFrom(visible),
           peerGuidanceCount: prompt.split(PEER_GUIDANCE).length - 1,
-          shellGuidanceCount: prompt.split('with the activation shell policy').length - 1,
+          shellGuidanceCount: visible.split('with the activation shell policy').length - 1,
           toolNames: sorted(context.tools?.map((tool) => tool.name) ?? []),
         });
         return stoppedStream();

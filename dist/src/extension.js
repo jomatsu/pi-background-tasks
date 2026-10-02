@@ -106,12 +106,10 @@ export default async function backgroundTasksExtension(pi) {
     const dockEntryHint = dockShortcutFooterHint(config.dockShortcut);
     const shellPolicy = initializeShellPolicy();
     const reloadShellOwner = getProcessReloadShellOwnerV1();
-    // Shell guidance is static for the activation, so it rides on bg_run's promptGuidelines
-    // (part of the base system prompt). A before_agent_start hook does not run for turns
-    // started by sendMessage({triggerTurn}) (earendil-works/pi#5581): the guidance then
-    // flips off and back on around every completion notification, and each flip rewrites
-    // the system prompt and invalidates the whole provider prompt cache.
-    const runtimeShellGuidelines = shellPolicyGuidance(shellPolicy).split('\n');
+    // Activation-stable shell policy for the model. It lives in the bg_run tool description,
+    // not promptGuidelines (dropped under a custom system prompt) or a before_agent_start hook
+    // (skipped for sendMessage-triggered turns, which rewrote the system prompt mid-run).
+    const runtimeShellDescription = `\n\nShell policy for bg_run commands:\n${shellPolicyGuidance(shellPolicy)}`;
     const seenTaskIds = new Set();
     let currentCtx;
     let currentRegistryCtx;
@@ -725,7 +723,7 @@ export default async function backgroundTasksExtension(pi) {
     pi.registerTool({
         name: 'bg_run',
         label: 'Background Run',
-        description: `Start a named long-running shell command in the background and return immediately with a task ID and output path. By default, completed, failed, or killed terminal state is delivered automatically as <background-task-notification> and starts a follow-up agent turn; do not sleep or poll merely to wait. Output is written to .pi/tasks and model-visible logs are bounded to ${formatSize(MAX_LOG_BYTES)}.`,
+        description: `Start a named long-running shell command in the background and return immediately with a task ID and output path. By default, completed, failed, or killed terminal state is delivered automatically as <background-task-notification> and starts a follow-up agent turn; do not sleep or poll merely to wait. Output is written to .pi/tasks and model-visible logs are bounded to ${formatSize(MAX_LOG_BYTES)}.${runtimeShellDescription}`,
         promptSnippet: 'Start a named long-running shell command; default terminal notification wakes a follow-up turn, so yield instead of polling',
         promptGuidelines: [
             'Use bg_run instead of bash for commands expected to run for a long time, such as test suites, dev servers, watchers, or builds.',
@@ -736,7 +734,6 @@ export default async function backgroundTasksExtension(pi) {
             'Treat <background-task-notification> as durable terminal truth. Do not call bg_status to reconfirm it; call bg_logs only when the task output is needed.',
             'Use bg_status/bg_logs only when the user explicitly requests an update, automatic notification or wake-up was deliberately disabled, there is concrete evidence the task is hung, or a terminal notification arrived and output details are needed.',
             'Do not set notifyOnCompletion:false or triggerOnCompletion:false unless intentionally opting out of automatic completion handling.',
-            ...runtimeShellGuidelines,
         ],
         parameters: BgRunParams,
         prepareArguments(args) {

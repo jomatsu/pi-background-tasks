@@ -177,7 +177,8 @@ export default function shellPolicyProvider(pi: ExtensionAPI): void {
     streamSimple(_model: Model<Api>, context: Context): AssistantMessageEventStream {
       calls += 1;
       const prompt = effectiveSystemPrompt(context);
-      const guidance = guidanceFrom(prompt);
+      // The shell policy rides on the bg_run tool description, not the system prompt.
+      const guidance = guidanceFrom([prompt, ...(context.tools ?? []).map((tool) => tool.description ?? '')].join('\n'));
       const task = latestBgRunTask(context);
       record({
         call: calls,

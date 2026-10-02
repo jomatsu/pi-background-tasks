@@ -321,7 +321,11 @@ function literalValue(ts, root, rel, expr, cache, stack = []) {
   }
   if (ts.isTemplateExpression(e)) {
     let out = e.head.text;
-    for (const span of e.templateSpans) out += String(literalValue(ts, root, rel, span.expression, cache, stack)) + span.literal.text;
+    for (const span of e.templateSpans) {
+      // `${runtimeX}` spans are activation-dependent (for example the shell policy); omit them.
+      const runtime = ts.isIdentifier(span.expression) && /^runtime[A-Z]/u.test(span.expression.text);
+      out += (runtime ? '' : String(literalValue(ts, root, rel, span.expression, cache, stack))) + span.literal.text;
+    }
     return out;
   }
   if (ts.isArrayLiteralExpression(e)) {
