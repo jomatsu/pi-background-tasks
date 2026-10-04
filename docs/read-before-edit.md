@@ -65,6 +65,7 @@ Every production file under `src/**` and `extensions/**` has exactly one primary
 | `src/core/registry.ts` | [subsystems/background-task-runtime](./subsystems/background-task-runtime.md) |
 | `src/core/reload-shell-owner.ts` | [subsystems/background-task-runtime](./subsystems/background-task-runtime.md) |
 | `src/core/shell-policy.ts` | [subsystems/background-task-runtime](./subsystems/background-task-runtime.md) |
+| `src/core/status-snapshot.ts` | [subsystems/host-ui-and-telemetry](./subsystems/host-ui-and-telemetry.md) |
 | `src/core/task-durable.ts` | [subsystems/child-launch-durability-and-safety](./subsystems/child-launch-durability-and-safety.md) |
 | `src/core/update-check.ts` | [subsystems/host-ui-and-telemetry](./subsystems/host-ui-and-telemetry.md) |
 | `src/core/windows-taskkill.ts` | [subsystems/background-task-runtime](./subsystems/background-task-runtime.md) |

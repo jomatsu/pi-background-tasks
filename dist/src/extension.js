@@ -10,6 +10,7 @@ import { getProcessReloadShellOwnerV1, makeReloadShellIdentity, } from './core/r
 import { initializeShellPolicy, shellPolicyGuidance } from './core/shell-policy.js';
 import { installBackgroundTaskExtensionApi, } from './core/extension-api.js';
 import { dockShortcutFooterHint, parseBackgroundTasksConfig } from './core/config.js';
+import { buildStatusSnapshot, encodeStatusSnapshotWidget } from './core/status-snapshot.js';
 import { LazyModule, SynchronousActivationCloseFence } from './core/lazy-module.js';
 /**
  * Project-local Pi background task manager.
@@ -322,6 +323,7 @@ export default async function backgroundTasksExtension(pi) {
             ? `Cleared ${String(cleared)} finished background task notice${cleared === 1 ? '' : 's'}.`
             : 'No finished background task notices to clear.', cleared > 0 ? 'info' : 'warning');
     }
+    let lastSnapshot;
     function updateUi(ctx = currentCtx) {
         if (registry.isShuttingDown() || !ctx)
             return;
@@ -335,6 +337,18 @@ export default async function backgroundTasksExtension(pi) {
             const unseenDone = allTasks.filter((task) => task.status === 'completed' && !seenTaskIds.has(task.id));
             const unseenFinishedCount = unseenFailed.length + unseenStopped.length + unseenDone.length;
             const updateSegment = formatUpdateSegment(latestKnownVersion, PACKAGE_VERSION ?? '');
+            if (ctx.mode === 'rpc') {
+                // RPC hosts draw their own task card from the structured snapshot instead of the dock.
+                const snapshot = buildStatusSnapshot(allTasks, seenTaskIds);
+                const encoded = snapshot ? encodeStatusSnapshotWidget(snapshot) : undefined;
+                const line = encoded?.[0];
+                if (lastSnapshot?.ui !== ctx.ui || lastSnapshot.line !== line) {
+                    lastSnapshot = { ui: ctx.ui, line };
+                    ctx.ui.setWidget('background-tasks', encoded);
+                }
+                ctx.ui.setStatus('background-tasks', updateSegment ? lightBlue(` bg ${updateSegment} `) : undefined);
+                return;
+            }
             ctx.ui.setWidget('background-tasks', undefined);
             if (running.length === 0 && unseenFinishedCount === 0) {
                 ctx.ui.setStatus('background-tasks', updateSegment ? lightBlue(` bg ${updateSegment} `) : undefined);

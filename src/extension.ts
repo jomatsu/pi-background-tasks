@@ -55,6 +55,7 @@ import {
 } from './core/extension-api.js';
 import type { BackgroundTaskForUi, TaskManagerResult } from './ui/background-tasks-manager.js';
 import { dockShortcutFooterHint, parseBackgroundTasksConfig } from './core/config.js';
+import { buildStatusSnapshot, encodeStatusSnapshotWidget } from './core/status-snapshot.js';
 import { LazyModule, SynchronousActivationCloseFence } from './core/lazy-module.js';
 
 /**
@@ -471,6 +472,8 @@ export default async function backgroundTasksExtension(pi: ExtensionAPI): Promis
     );
   }
 
+  let lastSnapshot: { ui: ExtensionContext['ui']; line: string | undefined } | undefined;
+
   function updateUi(ctx = currentCtx): void {
     if (registry.isShuttingDown() || !ctx) return;
     try {
@@ -488,6 +491,18 @@ export default async function backgroundTasksExtension(pi: ExtensionAPI): Promis
       );
       const unseenFinishedCount = unseenFailed.length + unseenStopped.length + unseenDone.length;
       const updateSegment = formatUpdateSegment(latestKnownVersion, PACKAGE_VERSION ?? '');
+      if (ctx.mode === 'rpc') {
+        // RPC hosts draw their own task card from the structured snapshot instead of the dock.
+        const snapshot = buildStatusSnapshot(allTasks, seenTaskIds);
+        const encoded = snapshot ? encodeStatusSnapshotWidget(snapshot) : undefined;
+        const line = encoded?.[0];
+        if (lastSnapshot?.ui !== ctx.ui || lastSnapshot.line !== line) {
+          lastSnapshot = { ui: ctx.ui, line };
+          ctx.ui.setWidget('background-tasks', encoded);
+        }
+        ctx.ui.setStatus('background-tasks', updateSegment ? lightBlue(` bg ${updateSegment} `) : undefined);
+        return;
+      }
       ctx.ui.setWidget('background-tasks', undefined);
       if (running.length === 0 && unseenFinishedCount === 0) {
         ctx.ui.setStatus(

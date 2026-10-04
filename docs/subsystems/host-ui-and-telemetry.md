@@ -5,7 +5,7 @@ mode: authored
 review_policy: behavioral
 stability: stable
 covers_surfaces: []
-covers_sources: [extensions/background-tasks.ts, src/core/config.ts, src/core/update-check.ts, src/extension.ts, src/ui/background-tasks-manager.ts]
+covers_sources: [extensions/background-tasks.ts, src/core/config.ts, src/core/status-snapshot.ts, src/core/update-check.ts, src/extension.ts, src/ui/background-tasks-manager.ts]
 ---
 # Host UI and telemetry
 
@@ -46,6 +46,10 @@ When visible, the footer label includes counts in this order:
 7. optional update segment.
 
 A finished badge is cleared when that task's detail view is opened, or when `/bg-clear` or its shortcut marks all currently unseen finished tasks as seen. Merely opening the list view or closing the dock does not clear badges.
+
+### RPC status snapshot
+
+In `--mode rpc` there is no terminal dock to draw, so the same update tick publishes the `background-tasks` widget as exactly one line: `PI_BG_TASKS_JSON:` followed by a `pi-background-tasks.status-snapshot` version 1 object `{kind, version, omitted, tasks}`. `src/core/status-snapshot.ts` builds it from running tasks plus unseen finished tasks, running first, capped at 12 with the remainder counted in `omitted`, and truncates free text. Each task carries id, name, kind (`shell`, `agent`, `attested`, `delegate`, `fusion`), status, command, timing, exit code/signal, output byte count, and agent telemetry or Fusion phase when available. The widget is cleared when nothing is left to show; hosts that recognise the prefix render native rows and must never show the line as text.
 
 ## Task manager UI
 
@@ -95,4 +99,4 @@ Shutdown terminal metadata and task waiters remain truthful even when old-activa
 
 ## Source ownership/reference
 
-Primary source ownership for this document is `extensions/background-tasks.ts`, `src/extension.ts`, `src/core/update-check.ts`, and `src/ui/background-tasks-manager.ts`.
+Primary source ownership for this document is `extensions/background-tasks.ts`, `src/extension.ts`, `src/core/status-snapshot.ts`, `src/core/update-check.ts`, and `src/ui/background-tasks-manager.ts`.

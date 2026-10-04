@@ -322,6 +322,8 @@ When tasks are running or unseen completions exist, the footer shows a compact `
 
 Agent tasks launched through `pi -p ...` or `pi --mode json ...` and marked `isAgent:true` can show task-owned model/context/token/tool telemetry. Missing child telemetry is shown as unavailable, not synthesized as zero.
 
+In `--mode rpc` there is no terminal dock. Instead the `background-tasks` widget carries one line, `PI_BG_TASKS_JSON:` followed by a `pi-background-tasks.status-snapshot` version 1 object (`{kind, version, omitted, tasks}`) listing running tasks and unseen finished ones, so hosts can draw native task rows. The widget is cleared when nothing is left to show. Hosts must not render the line as text.
+
 <a id="commands"></a>
 <a id="footer-dock-ux"></a>
 <a id="update-available-notice"></a>
