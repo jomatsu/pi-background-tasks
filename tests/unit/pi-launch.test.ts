@@ -668,6 +668,32 @@ void describe('Pi launch resolution', () => {
         kind: 'compiled-host',
       });
 
+      const boltDir = join(root, 'pi-bolt-darwin-arm64');
+      const boltImage = join(boltDir, 'pi-bin');
+      await writeNestedFile(boltImage, 'Pi-Bolt image fixture\n', 0o755);
+      assert.deepEqual(
+        resolvePiLaunch({
+          platform: 'darwin',
+          execPath: boltImage,
+          hostScript: '/$bunfs/root/pi',
+          path: join(root, 'empty-bin'),
+        }),
+        { executable: realpathSync(boltImage), argvPrefix: [], kind: 'compiled-host' },
+        'pi-bin without a launcher beside it runs on its own',
+      );
+      const boltLauncher = join(boltDir, 'pi');
+      await writeNestedFile(boltLauncher, 'Pi-Bolt launcher fixture\n', 0o755);
+      assert.deepEqual(
+        resolvePiLaunch({
+          platform: 'darwin',
+          execPath: boltImage,
+          hostScript: '/$bunfs/root/pi',
+          path: join(root, 'empty-bin'),
+        }),
+        { executable: realpathSync(boltLauncher), argvPrefix: [], kind: 'compiled-host' },
+        'pi-bin restarts through the launcher beside it',
+      );
+
       const arbitrarySdkApp = join(root, 'custom-sdk-application');
       await writeNestedFile(arbitrarySdkApp, 'compiled SDK fixture\n', 0o755);
       let moduleLookups = 0;

@@ -237,12 +237,28 @@ function resolveCompiledHostLaunch(deps, io, platform) {
     const execPath = deps.execPath ?? process.execPath;
     const executableName = executableBasename(execPath, platform);
     const isNamedPiExecutable = platform === 'win32' ? /^pi\.(?:exe|com)$/i.test(executableName) : executableName === 'pi';
+    // Pi-Bolt's macOS build runs its compiled image as `pi-bin` beside a `pi` launcher.
+    const isPiBoltImage = platform !== 'win32' && executableName === 'pi-bin';
     // A Bun virtual script path describes packaging mechanics shared by every
     // compiled SDK application; it is not Pi CLI authority. Retain the direct
-    // route only for the established Pi executable name.
-    if (isGenericJavaScriptRuntime(execPath, platform) || !isNamedPiExecutable)
+    // route only for the established Pi executable names.
+    if (isGenericJavaScriptRuntime(execPath, platform) || !(isNamedPiExecutable || isPiBoltImage))
         return undefined;
-    const executableReal = pathOperation('compiled host realpath', execPath, () => io.realpath(execPath));
+    let executableReal = pathOperation('compiled host realpath', execPath, () => io.realpath(execPath));
+    if (isPiBoltImage) {
+        // Children start through the launcher so they keep its spawn helper and page preload.
+        const launcher = join(dirname(executableReal), 'pi');
+        try {
+            const launcherReal = io.realpath(launcher);
+            if (io.stat(launcherReal).isFile()) {
+                io.access(launcherReal, constants.X_OK);
+                executableReal = launcherReal;
+            }
+        }
+        catch {
+            // pi-bin also runs on its own.
+        }
+    }
     const executableStat = pathOperation('compiled host stat', executableReal, () => io.stat(executableReal));
     if (!executableStat.isFile())
         throw new Error('compiled Pi host is not a regular file');
