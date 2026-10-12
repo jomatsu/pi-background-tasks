@@ -19,6 +19,7 @@ Configuration is read before any package registration on each extension activati
 |---|---|---|
 | `PI_BG_FEATURES` | `process,delegate,fusion,attested,attribution` | A comma-separated set of exact lowercase, unique tokens from `process`, `delegate`, `fusion`, `attested`, `attribution`. Whitespace, blanks, duplicates, unknown values, and omission of mandatory `process` are errors. |
 | `PI_BG_DOCK_SHORTCUT` | `shift+down` | Exactly `shift+down`, `ctrl+alt+b`, or `off`. Only the selected literal key is registered; `off` registers no dock shortcut. |
+| `PI_BG_BASH_AUTO_BACKGROUND_SECONDS` | `60` | Whole seconds before a still-running foreground [`bash`](../tools/bash.md) command in an interactive session moves to a background task. `0` or `off` makes `bash` behave exactly like Pi's built-in tool. Anything else is an error. |
 
 Capabilities are independent except for the derived result surface:
 

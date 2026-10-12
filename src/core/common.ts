@@ -466,7 +466,8 @@ export interface StartManagedTaskOptions {
   cancel: () => void;
   notifyOnCompletion: boolean;
   triggerOnCompletion: boolean;
-  fusion: FusionTaskFacts;
+  /** Fusion workflow facts; omitted for adopted foreground shell commands. */
+  fusion?: FusionTaskFacts | undefined;
   stopWaitMs?: number | undefined;
   /** Prevent terminal publication until the launch receipt handoff is observable. */
   terminalPublicationGate?: Promise<void> | undefined;

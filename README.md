@@ -37,7 +37,7 @@
 | Surface kind | Configured variants | Available by default |
 | --- | --- | --- |
 | command | 11 | 11 |
-| tool | 11 | 11 |
+| tool | 12 | 12 |
 | shortcut | 3 | 2 |
 | renderer | 2 | 2 |
 | eventbus | 1 | 1 |
@@ -45,7 +45,7 @@
 
 Public commands: `/bg`, `/bg-clear`, `/bg-tasks`, `/bg-update`, `/claude-cache`, `/fusion`, `/fusion-models`, `/jobs`, `/kill`, `/logs`, `/tasks`.
 
-Public tools: `bg_delegate`, `bg_kill`, `bg_logs`, `bg_result`, `bg_run`, `bg_run_pi_attested`, `bg_status`, `fusion_investigate`, `fusion_reason`, `fusion_research`, `fusion_validate`.
+Public tools: `bash`, `bg_delegate`, `bg_kill`, `bg_logs`, `bg_result`, `bg_run`, `bg_run_pi_attested`, `bg_status`, `fusion_investigate`, `fusion_reason`, `fusion_research`, `fusion_validate`.
 
 ### Configuration-dependent surfaces
 

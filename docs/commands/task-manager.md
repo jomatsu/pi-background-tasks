@@ -12,8 +12,8 @@ covers_sources: []
 <!-- pi-docs:begin name="command-contract-tasks-bg-tasks" generator="scripts/docs/generate.mjs" -->
 | Command | Availability | Default | Description | Provenance |
 | --- | --- | --- | --- | --- |
-| `/tasks` | `always` | yes | Open the Claude-like background task manager UI | `src/extension.ts:795` |
-| `/bg-tasks` | `always` | yes | Open the background task manager UI | `src/extension.ts:803` |
+| `/tasks` | `always` | yes | Open the Claude-like background task manager UI | `src/extension.ts:901` |
+| `/bg-tasks` | `always` | yes | Open the background task manager UI | `src/extension.ts:909` |
 <!-- pi-docs:end name="command-contract-tasks-bg-tasks" -->
 
 Open the interactive background task manager. `/tasks` and `/bg-tasks` are aliases.

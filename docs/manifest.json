@@ -149,6 +149,16 @@
       "required": true,
       "reviewer": "existing-gpt-5.5-host-panel-plus-operator-update-delta",
       "state": "stale-authored-prose"
+    },
+    {
+      "authored_body_sha256": "sha256:be72a384c8db36bd40dcd89a535646304f88c15ca8f1b0a0afac8eba34f202fa",
+      "covers_sources": [
+        "src/core/auto-background-bash.ts"
+      ],
+      "doc_id": "tools/bash",
+      "rel": "docs/tools/bash.md",
+      "required": true,
+      "state": "missing"
     }
   ],
   "configuration_variants": {
@@ -191,6 +201,7 @@
     "renderer:fusion-result",
     "shortcut:ctrl+alt+c",
     "shortcut:shift+down",
+    "tool:bash",
     "tool:bg_delegate",
     "tool:bg_kill",
     "tool:bg_logs",
@@ -592,6 +603,19 @@
       "review_policy": "behavioral",
       "stability": "stable"
     },
+    "tools/bash": {
+      "audience": "agent",
+      "covers_sources": [
+        "src/core/auto-background-bash.ts"
+      ],
+      "covers_surfaces": [
+        "tool:bash"
+      ],
+      "mode": "mixed",
+      "rel": "docs/tools/bash.md",
+      "review_policy": "behavioral",
+      "stability": "evolving"
+    },
     "tools/bg_delegate": {
       "audience": "agent",
       "covers_sources": [],
@@ -818,6 +842,12 @@
       "rel": "docs/reference/shortcuts-and-dock.md"
     },
     {
+      "doc_id": "tools/bash",
+      "generator": "scripts/docs/generate.mjs",
+      "name": "tool-contract-bash",
+      "rel": "docs/tools/bash.md"
+    },
+    {
       "doc_id": "tools/bg_delegate",
       "generator": "scripts/docs/generate.mjs",
       "name": "tool-contract-bg_delegate",
@@ -931,6 +961,7 @@
     "shortcut:ctrl+alt+b",
     "shortcut:ctrl+alt+c",
     "shortcut:shift+down",
+    "tool:bash",
     "tool:bg_delegate",
     "tool:bg_kill",
     "tool:bg_logs",
@@ -956,7 +987,7 @@
         "id": "command:bg",
         "kind": "command",
         "name": "bg",
-        "source": "src/extension.ts:768"
+        "source": "src/extension.ts:874"
       },
       {
         "availability": "always",
@@ -965,7 +996,7 @@
         "id": "command:bg-clear",
         "kind": "command",
         "name": "bg-clear",
-        "source": "src/extension.ts:811"
+        "source": "src/extension.ts:917"
       },
       {
         "availability": "always",
@@ -974,7 +1005,7 @@
         "id": "command:bg-tasks",
         "kind": "command",
         "name": "bg-tasks",
-        "source": "src/extension.ts:803"
+        "source": "src/extension.ts:909"
       },
       {
         "availability": "always",
@@ -983,7 +1014,7 @@
         "id": "command:bg-update",
         "kind": "command",
         "name": "bg-update",
-        "source": "src/extension.ts:819"
+        "source": "src/extension.ts:925"
       },
       {
         "availability": "feature:attribution",
@@ -1019,7 +1050,7 @@
         "id": "command:jobs",
         "kind": "command",
         "name": "jobs",
-        "source": "src/extension.ts:868"
+        "source": "src/extension.ts:977"
       },
       {
         "availability": "always",
@@ -1028,7 +1059,7 @@
         "id": "command:kill",
         "kind": "command",
         "name": "kill",
-        "source": "src/extension.ts:912"
+        "source": "src/extension.ts:1024"
       },
       {
         "availability": "always",
@@ -1037,7 +1068,7 @@
         "id": "command:logs",
         "kind": "command",
         "name": "logs",
-        "source": "src/extension.ts:881"
+        "source": "src/extension.ts:992"
       },
       {
         "availability": "always",
@@ -1046,7 +1077,7 @@
         "id": "command:tasks",
         "kind": "command",
         "name": "tasks",
-        "source": "src/extension.ts:795"
+        "source": "src/extension.ts:901"
       }
     ],
     "eventbus": [
@@ -1078,7 +1109,7 @@
         "id": "renderer:background-task-notification",
         "kind": "renderer",
         "name": "background-task-notification",
-        "source": "src/extension.ts:645"
+        "source": "src/extension.ts:737"
       },
       {
         "availability": "feature:fusion",
@@ -1097,7 +1128,7 @@
         "id": "shortcut:ctrl+alt+b",
         "kind": "shortcut",
         "name": "ctrl+alt+b",
-        "source": "src/extension.ts:852"
+        "source": "src/extension.ts:961"
       },
       {
         "availability": "always",
@@ -1106,7 +1137,7 @@
         "id": "shortcut:ctrl+alt+c",
         "kind": "shortcut",
         "name": "ctrl+alt+c",
-        "source": "src/extension.ts:860"
+        "source": "src/extension.ts:969"
       },
       {
         "availability": "dock:shift+down",
@@ -1115,10 +1146,41 @@
         "id": "shortcut:shift+down",
         "kind": "shortcut",
         "name": "shift+down",
-        "source": "src/extension.ts:843"
+        "source": "src/extension.ts:952"
       }
     ],
     "tool": [
+      {
+        "availability": "always",
+        "default_available": true,
+        "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds. In interactive sessions a command still running after the auto-background window (PI_BG_BASH_AUTO_BACKGROUND_SECONDS, default 60; 0 or off disables) keeps running as a background task and the call returns; a <background-task-notification> wakes you when it finishes.",
+        "id": "tool:bash",
+        "kind": "tool",
+        "label": "bash",
+        "name": "bash",
+        "promptGuidelines": [
+          "Inspect PI_* environment variables for current model and session details.",
+          "bash moves a command that is still running after the auto-background window to a background task and returns; the same process keeps running and its completion arrives as <background-task-notification>. Continue only with independent work or end the turn; never sleep, poll, or rerun it."
+        ],
+        "promptSnippet": "Execute bash commands (ls, grep, find, etc.)",
+        "schema": {
+          "properties": {
+            "command": {
+              "description": "Bash command to execute",
+              "type": "string"
+            },
+            "timeout": {
+              "description": "Timeout in seconds (optional, no default timeout)",
+              "type": "number"
+            }
+          },
+          "required": [
+            "command"
+          ],
+          "type": "object"
+        },
+        "source": "src/extension.ts:1209"
+      },
       {
         "availability": "feature:delegate",
         "default_available": true,
@@ -1232,7 +1294,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1199"
+        "source": "src/extension.ts:1384"
       },
       {
         "availability": "always",
@@ -1268,7 +1330,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1154"
+        "source": "src/extension.ts:1336"
       },
       {
         "availability": "any(feature:delegate,feature:fusion)",
@@ -1363,7 +1425,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:945"
+        "source": "src/extension.ts:1060"
       },
       {
         "availability": "feature:attested",
@@ -1426,7 +1488,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1054"
+        "source": "src/extension.ts:1228"
       },
       {
         "availability": "always",
@@ -1452,7 +1514,7 @@
           "required": [],
           "type": "object"
         },
-        "source": "src/extension.ts:1123"
+        "source": "src/extension.ts:1303"
       },
       {
         "availability": "feature:fusion",
@@ -1845,6 +1907,9 @@
     "src/core/attested-pi-run.ts": [
       "subsystems/attested-pi-runs"
     ],
+    "src/core/auto-background-bash.ts": [
+      "tools/bash"
+    ],
     "src/core/canonical-json.ts": [
       "subsystems/child-launch-durability-and-safety"
     ],
@@ -2053,6 +2118,9 @@
     ],
     "shortcut:shift+down": [
       "reference/shortcuts-and-dock"
+    ],
+    "tool:bash": [
+      "tools/bash"
     ],
     "tool:bg_delegate": [
       "tools/bg_delegate"

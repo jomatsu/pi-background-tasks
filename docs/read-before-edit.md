@@ -24,6 +24,7 @@ Every production file under `src/**` and `extensions/**` has exactly one primary
 | `src/core/anthropic-attribution.ts` | [subsystems/anthropic-attribution](./subsystems/anthropic-attribution.md) |
 | `src/core/attested-pi-contract.ts` | [subsystems/attested-pi-runs](./subsystems/attested-pi-runs.md) |
 | `src/core/attested-pi-run.ts` | [subsystems/attested-pi-runs](./subsystems/attested-pi-runs.md) |
+| `src/core/auto-background-bash.ts` | [tools/bash](./tools/bash.md) |
 | `src/core/canonical-json.ts` | [subsystems/child-launch-durability-and-safety](./subsystems/child-launch-durability-and-safety.md) |
 | `src/core/common.ts` | [subsystems/background-task-runtime](./subsystems/background-task-runtime.md) |
 | `src/core/config.ts` | [subsystems/host-ui-and-telemetry](./subsystems/host-ui-and-telemetry.md) |
@@ -92,6 +93,7 @@ Every production file under `src/**` and `extensions/**` has exactly one primary
 | `command:kill` | `always` | yes |
 | `command:logs` | `always` | yes |
 | `command:tasks` | `always` | yes |
+| `tool:bash` | `always` | yes |
 | `tool:bg_delegate` | `feature:delegate` | yes |
 | `tool:bg_kill` | `always` | yes |
 | `tool:bg_logs` | `always` | yes |

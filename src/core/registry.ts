@@ -2021,6 +2021,21 @@ export class BackgroundTaskRegistry {
     return task;
   }
 
+  /** Allocate a task id from the registry's id source (for callers that build managed tasks). */
+  newTaskId(): string {
+    return this.makeTaskIdFn();
+  }
+
+  /**
+   * Append raw output to a running managed task that has no Fusion workflow (an adopted
+   * foreground shell command). Output is bounded by the same cap as spawned tasks.
+   */
+  appendManagedOutput(task: BgTask, data: Buffer | string): void {
+    if (task.status !== 'running' || task.managedCancel === undefined || task.fusion !== undefined)
+      return;
+    this.writeToStream(task, Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8'));
+  }
+
   async updateManagedTask(task: BgTask, state: string, line?: string): Promise<void> {
     if (task.status !== 'running' || task.fusion === undefined) return;
     task.fusion.state = state;
