@@ -89,6 +89,7 @@ import {
   LazyModule,
   SynchronousActivationCloseFence,
 } from "./core/lazy-module.js";
+import { CompletionNotificationCoalescer } from "./core/notification-coalescer.js";
 
 /**
  * Project-local Pi background task manager.
@@ -319,12 +320,27 @@ export default async function backgroundTasksExtension(
     model: ctx.model,
   });
 
+  // Completion notifications coalesce: while the agent is busy they park —
+  // with no artificial delay — and flush at the next turn boundary, so every
+  // task that finished during one assistant turn arrives as one message.
+  // While idle they flush on the next tick, merging same-tick completions.
+  let agentRunDepth = 0;
+  const notificationCoalescer = new CompletionNotificationCoalescer(
+    (message, options) => {
+      pi.sendMessage<unknown>(message, options);
+    },
+    () => agentRunDepth > 0,
+    (flush) => {
+      setImmediate(flush);
+    },
+  );
+
   const registry = new BackgroundTaskRegistry({
     onChange: () => {
       updateUi();
     },
     sendCompletionNotification: (message, options) => {
-      pi.sendMessage(message, options);
+      notificationCoalescer.push(message, options);
     },
     publishTerminal: (task) => {
       eventService.publishTerminal(task);
@@ -344,6 +360,9 @@ export default async function backgroundTasksExtension(
     let handoffError: unknown;
     if (!disposed) {
       disposed = true;
+      // Deliver any parked completion notifications before the runtime goes
+      // away so a reload or shutdown cannot silently drop a terminal state.
+      notificationCoalescer.dispose();
       registry.closeTaskAdmissions();
       if (pendingActivationClaim !== undefined) {
         const claim = pendingActivationClaim;
@@ -398,6 +417,23 @@ export default async function backgroundTasksExtension(
   pi.on("session_shutdown", (event) => {
     shutdownReason = event.reason;
     activationCloseFence.close();
+  });
+
+  // Delivery points for coalesced completion notifications. turn_end fires
+  // between assistant turns while a run continues; agent_end and agent_settled
+  // cover a run's end. flush() is a no-op when nothing is parked.
+  pi.on("agent_start", () => {
+    agentRunDepth += 1;
+  });
+  pi.on("agent_end", () => {
+    agentRunDepth = Math.max(0, agentRunDepth - 1);
+    notificationCoalescer.flush();
+  });
+  pi.on("turn_end", () => {
+    notificationCoalescer.flush();
+  });
+  pi.on("agent_settled", () => {
+    notificationCoalescer.flush();
   });
 
   // This is the first session_start callback. Claim synchronously before the
@@ -734,30 +770,32 @@ export default async function backgroundTasksExtension(
     }
   }
 
-  pi.registerMessageRenderer<BgTaskSnapshot>(
+  pi.registerMessageRenderer<BgTaskSnapshot | BgTaskSnapshot[]>(
     "background-task-notification",
     (message, _options, theme) => {
-      const task = message.details;
-      const status = task?.status ?? "completed";
-      const color: ThemeColor =
-        status === "completed"
-          ? "success"
-          : status === "failed"
-            ? "error"
-            : status === "killed"
-              ? "warning"
-              : "accent";
-      const id = task?.id ?? "background task";
-      const name = task ? taskDisplayName(task) : "Background task";
-      const output = task?.outputPath
-        ? `\n${theme.fg("dim", `Output: ${task.outputPath}`)}`
-        : "";
-      const error = task?.error ? `\n${theme.fg("error", task.error)}` : "";
-      return new Text(
-        `${theme.fg(color, `[bg ${status}]`)} ${theme.fg("accent", name)} ${theme.fg("dim", `(${id})`)}${output}${error}`,
-        0,
-        0,
-      );
+      const details = message.details;
+      const tasks: (BgTaskSnapshot | undefined)[] = Array.isArray(details)
+        ? details
+        : [details];
+      const lines = tasks.map((task) => {
+        const status = task?.status ?? "completed";
+        const color: ThemeColor =
+          status === "completed"
+            ? "success"
+            : status === "failed"
+              ? "error"
+              : status === "killed"
+                ? "warning"
+                : "accent";
+        const id = task?.id ?? "background task";
+        const name = task ? taskDisplayName(task) : "Background task";
+        const output = task?.outputPath
+          ? `\n${theme.fg("dim", `Output: ${task.outputPath}`)}`
+          : "";
+        const error = task?.error ? `\n${theme.fg("error", task.error)}` : "";
+        return `${theme.fg(color, `[bg ${status}]`)} ${theme.fg("accent", name)} ${theme.fg("dim", `(${id})`)}${output}${error}`;
+      });
+      return new Text(lines.join("\n"), 0, 0);
     },
   );
 
