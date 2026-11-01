@@ -3229,7 +3229,7 @@ export class BackgroundTaskRegistry {
                 content,
                 display: true,
                 details: snapshot(task),
-            }, { deliverAs: 'followUp', triggerTurn: task.triggerOnCompletion });
+            }, { deliverAs: 'steer', triggerTurn: task.triggerOnCompletion });
         }
         catch (error) {
             task.notified = false;

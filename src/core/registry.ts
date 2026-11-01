@@ -209,7 +209,13 @@ export interface CompletionNotificationMessage {
 }
 
 export interface CompletionNotificationOptions {
-  deliverAs: 'followUp';
+  /**
+   * 'steer' delivers the notification at the next turn boundary while the agent
+   * is still running (after the current assistant turn's tool calls, before the
+   * next LLM call); when the agent is idle, triggerTurn starts a turn at once.
+   * 'followUp' waits for the whole agent run to end before delivery.
+   */
+  deliverAs: 'followUp' | 'steer';
   triggerTurn: boolean;
 }
 
@@ -3967,7 +3973,7 @@ export class BackgroundTaskRegistry {
           display: true,
           details: snapshot(task),
         },
-        { deliverAs: 'followUp', triggerTurn: task.triggerOnCompletion },
+        { deliverAs: 'steer', triggerTurn: task.triggerOnCompletion },
       );
     } catch (error) {
       task.notified = false;
