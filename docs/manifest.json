@@ -53,6 +53,7 @@
       "authored_body_sha256": "sha256:98480d246e890ee3dc1ed98cdb007cbbe016cdba896d700221a06132253393f2",
       "covers_sources": [
         "src/core/common.ts",
+        "src/core/notification-coalescer.ts",
         "src/core/registry.ts",
         "src/core/reload-shell-owner.ts",
         "src/core/shell-policy.ts",
@@ -491,6 +492,7 @@
       "audience": "maintainer",
       "covers_sources": [
         "src/core/common.ts",
+        "src/core/notification-coalescer.ts",
         "src/core/registry.ts",
         "src/core/reload-shell-owner.ts",
         "src/core/shell-policy.ts",
@@ -987,7 +989,7 @@
         "id": "command:bg",
         "kind": "command",
         "name": "bg",
-        "source": "src/extension.ts:874"
+        "source": "src/extension.ts:912"
       },
       {
         "availability": "always",
@@ -996,7 +998,7 @@
         "id": "command:bg-clear",
         "kind": "command",
         "name": "bg-clear",
-        "source": "src/extension.ts:917"
+        "source": "src/extension.ts:955"
       },
       {
         "availability": "always",
@@ -1005,7 +1007,7 @@
         "id": "command:bg-tasks",
         "kind": "command",
         "name": "bg-tasks",
-        "source": "src/extension.ts:909"
+        "source": "src/extension.ts:947"
       },
       {
         "availability": "always",
@@ -1014,7 +1016,7 @@
         "id": "command:bg-update",
         "kind": "command",
         "name": "bg-update",
-        "source": "src/extension.ts:925"
+        "source": "src/extension.ts:963"
       },
       {
         "availability": "feature:attribution",
@@ -1050,7 +1052,7 @@
         "id": "command:jobs",
         "kind": "command",
         "name": "jobs",
-        "source": "src/extension.ts:977"
+        "source": "src/extension.ts:1015"
       },
       {
         "availability": "always",
@@ -1059,7 +1061,7 @@
         "id": "command:kill",
         "kind": "command",
         "name": "kill",
-        "source": "src/extension.ts:1024"
+        "source": "src/extension.ts:1062"
       },
       {
         "availability": "always",
@@ -1068,7 +1070,7 @@
         "id": "command:logs",
         "kind": "command",
         "name": "logs",
-        "source": "src/extension.ts:992"
+        "source": "src/extension.ts:1030"
       },
       {
         "availability": "always",
@@ -1077,7 +1079,7 @@
         "id": "command:tasks",
         "kind": "command",
         "name": "tasks",
-        "source": "src/extension.ts:901"
+        "source": "src/extension.ts:939"
       }
     ],
     "eventbus": [
@@ -1109,7 +1111,7 @@
         "id": "renderer:background-task-notification",
         "kind": "renderer",
         "name": "background-task-notification",
-        "source": "src/extension.ts:737"
+        "source": "src/extension.ts:773"
       },
       {
         "availability": "feature:fusion",
@@ -1128,7 +1130,7 @@
         "id": "shortcut:ctrl+alt+b",
         "kind": "shortcut",
         "name": "ctrl+alt+b",
-        "source": "src/extension.ts:961"
+        "source": "src/extension.ts:999"
       },
       {
         "availability": "always",
@@ -1137,7 +1139,7 @@
         "id": "shortcut:ctrl+alt+c",
         "kind": "shortcut",
         "name": "ctrl+alt+c",
-        "source": "src/extension.ts:969"
+        "source": "src/extension.ts:1007"
       },
       {
         "availability": "dock:shift+down",
@@ -1146,7 +1148,7 @@
         "id": "shortcut:shift+down",
         "kind": "shortcut",
         "name": "shift+down",
-        "source": "src/extension.ts:952"
+        "source": "src/extension.ts:990"
       }
     ],
     "tool": [
@@ -1179,7 +1181,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1209"
+        "source": "src/extension.ts:1247"
       },
       {
         "availability": "feature:delegate",
@@ -1294,7 +1296,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1384"
+        "source": "src/extension.ts:1422"
       },
       {
         "availability": "always",
@@ -1330,7 +1332,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1336"
+        "source": "src/extension.ts:1374"
       },
       {
         "availability": "any(feature:delegate,feature:fusion)",
@@ -1425,7 +1427,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1060"
+        "source": "src/extension.ts:1098"
       },
       {
         "availability": "feature:attested",
@@ -1488,7 +1490,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1228"
+        "source": "src/extension.ts:1266"
       },
       {
         "availability": "always",
@@ -1514,7 +1516,7 @@
           "required": [],
           "type": "object"
         },
-        "source": "src/extension.ts:1303"
+        "source": "src/extension.ts:1341"
       },
       {
         "availability": "feature:fusion",
@@ -2020,6 +2022,9 @@
     ],
     "src/core/lazy-module.ts": [
       "subsystems/delegation"
+    ],
+    "src/core/notification-coalescer.ts": [
+      "subsystems/background-task-runtime"
     ],
     "src/core/pi-launch.ts": [
       "subsystems/child-launch-durability-and-safety"
