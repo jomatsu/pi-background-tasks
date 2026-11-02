@@ -46,7 +46,7 @@ Foreground commands are best when the next answer depends on immediate output. B
 `bg_run` requires:
 
 ```json
-{"name":"Short label","command":"shell command","isAgent":false}
+{"name":"Short label","command":"shell command"}
 ```
 
 Defaults are `notifyOnCompletion:true` and `triggerOnCompletion:true`. With those defaults, Pi should not poll `bg_status` or `bg_logs` merely to wait.
@@ -75,7 +75,7 @@ Fusion is a fixed workflow, not a free-form mode switch:
 ### Long command
 
 ```json
-{"name":"Build watch","command":"npm run build -- --watch","isAgent":false,"timeoutSeconds":7200}
+{"name":"Build watch","command":"npm run build -- --watch","timeoutSeconds":7200}
 ```
 
 ### Delegate investigation

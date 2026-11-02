@@ -45,15 +45,13 @@ function optionalTrimmed(value) {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : undefined;
 }
+// Keep the object open so legacy extra arguments are accepted and ignored.
 const BgRunParams = Type.Object({
     name: Type.String({
         description: "Short human-readable task name shown in the bg footer dock. Required; use 2-6 words, not the raw command.",
     }),
     command: Type.String({
         description: "Shell command to start in the background",
-    }),
-    isAgent: Type.Boolean({
-        description: "Required. Set true only when this background task launches an LLM/agent process, such as a child `pi -p ...` or `pi --mode json ...`, so Pi-agent telemetry can be collected. Set false for scripts, tests, servers, sleeps, and ordinary shell commands.",
     }),
     description: Type.Optional(Type.String({
         description: "Optional longer human-readable context for the task",
@@ -68,7 +66,7 @@ const BgRunParams = Type.Object({
         description: "Whether that notification should automatically trigger a follow-up agent turn. Default: true for bg_run; requires notifyOnCompletion.",
     })),
     surviveReload: Type.Optional(Type.Boolean({
-        description: "Opt in to retaining this exact ordinary isAgent:false shell execution across a real same-process Pi reload. Default: false. Unsupported for agent, managed, delegate, Fusion, and attested tasks.",
+        description: "Opt in to retaining this exact shell execution across a real same-process Pi reload. Default: false.",
     })),
 });
 const BgPiAttestedParams = Type.Object({
@@ -805,7 +803,7 @@ export default async function backgroundTasksExtension(pi) {
         promptSnippet: "Start a named long-running shell command; default terminal notification wakes a follow-up turn, so yield instead of polling",
         promptGuidelines: [
             "Use bg_run instead of bash for commands expected to run for a long time, such as test suites, dev servers, watchers, or builds.",
-            "Always set isAgent: true only when the background task launches an LLM/agent process; set isAgent: false for scripts, tests, dev servers, sleeps, and ordinary shell commands.",
+            "Use pi-subagents for agent delegation; bg_run is only for long-running shell commands.",
             "When using bg_run, always set name to a concise 2-6 word human-readable label for the footer task dock; do not use the raw command as the name unless it is already short and meaningful.",
             "bg_run returns immediately. With notifyOnCompletion:true and triggerOnCompletion:true (both defaults), completed, failed, or killed terminal state is delivered as <background-task-notification> and automatically starts a follow-up agent turn.",
             "After a default bg_run launch, continue only independent useful work that does not merely wait for the task; otherwise briefly acknowledge it if useful, then end the current turn. Do not call sleep, bg_status, or bg_logs merely to wait; the terminal notification will wake you.",
@@ -820,22 +818,15 @@ export default async function backgroundTasksExtension(pi) {
             const input = args;
             if (typeof input.command !== "string")
                 throw new Error("bg_run requires command string");
-            if (typeof input.isAgent !== "boolean") {
-                throw new Error("bg_run requires isAgent boolean. Set true only for LLM/agent tasks; set false for scripts, tests, servers, sleeps, and ordinary shell commands.");
-            }
             if (Object.prototype.hasOwnProperty.call(input, "surviveReload") &&
                 typeof input.surviveReload !== "boolean") {
                 throw new ReloadSurvivalError("pi_bg_survive_reload_invalid", "bg_run surviveReload must be boolean when present");
-            }
-            if (input.surviveReload === true && input.isAgent) {
-                throw new ReloadSurvivalError("pi_bg_survive_reload_requires_non_agent", "bg_run surviveReload requires isAgent:false");
             }
             const prepared = {
                 command: input.command,
                 name: normalizeTaskName(input.name) ??
                     normalizeTaskName(input.description) ??
                     deriveTaskNameFromCommand(input.command),
-                isAgent: input.isAgent,
             };
             if (typeof input.description === "string")
                 prepared.description = input.description;
@@ -850,15 +841,9 @@ export default async function backgroundTasksExtension(pi) {
             return prepared;
         },
         async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-            if (typeof params.isAgent !== "boolean") {
-                throw new Error("bg_run requires isAgent boolean. Set true only for LLM/agent tasks; set false for scripts, tests, servers, sleeps, and ordinary shell commands.");
-            }
-            if (params.surviveReload === true && params.isAgent) {
-                throw new ReloadSurvivalError("pi_bg_survive_reload_requires_non_agent", "bg_run surviveReload requires isAgent:false");
-            }
             const taskOptions = {
                 name: params.name,
-                isAgent: params.isAgent,
+                isAgent: false,
                 surviveReload: params.surviveReload ?? false,
                 notifyOnCompletion: params.notifyOnCompletion ?? true,
                 triggerOnCompletion: params.triggerOnCompletion ?? true,

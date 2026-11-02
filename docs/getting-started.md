@@ -70,14 +70,13 @@ When Pi itself should start a long command, use the `bg_run` tool with the stric
 ```json
 {
   "name": "Typecheck",
-  "command": "npm run typecheck",
-  "isAgent": false
+  "command": "npm run typecheck"
 }
 ```
 
 `bg_run` defaults `notifyOnCompletion:true` and `triggerOnCompletion:true`, so Pi should not sleep or poll merely to wait. The terminal notification is the wake-up path.
 
-Set `isAgent:true` only when the shell command launches a child Pi/LLM agent, such as `pi -p ...` or `pi --mode json ...`.
+`bg_run` is shell-only. Use the separate `pi-subagents` extension for agent delegation.
 
 ## 5. Delegate read-only investigation
 

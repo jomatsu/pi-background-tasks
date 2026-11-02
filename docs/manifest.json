@@ -50,7 +50,7 @@
       "state": "stale-authored-prose"
     },
     {
-      "authored_body_sha256": "sha256:98480d246e890ee3dc1ed98cdb007cbbe016cdba896d700221a06132253393f2",
+      "authored_body_sha256": "sha256:7e2b6d39ac7f63e00ac0b373293d603bd3fa895d89113016837c0e295595c1db",
       "covers_sources": [
         "src/core/common.ts",
         "src/core/notification-coalescer.ts",
@@ -136,7 +136,7 @@
       "state": "stale-authored-prose"
     },
     {
-      "authored_body_sha256": "sha256:50573c58e618f445ecd2fee536e1316023fce10d29b14a6be83942c2d0d21903",
+      "authored_body_sha256": "sha256:22c93b7341c49d1d993a4b810c971510f023e6e24d3e4ee11e580497adfd0b64",
       "covers_sources": [
         "extensions/background-tasks.ts",
         "src/core/config.ts",
@@ -989,7 +989,7 @@
         "id": "command:bg",
         "kind": "command",
         "name": "bg",
-        "source": "src/extension.ts:912"
+        "source": "src/extension.ts:908"
       },
       {
         "availability": "always",
@@ -998,7 +998,7 @@
         "id": "command:bg-clear",
         "kind": "command",
         "name": "bg-clear",
-        "source": "src/extension.ts:955"
+        "source": "src/extension.ts:951"
       },
       {
         "availability": "always",
@@ -1007,7 +1007,7 @@
         "id": "command:bg-tasks",
         "kind": "command",
         "name": "bg-tasks",
-        "source": "src/extension.ts:947"
+        "source": "src/extension.ts:943"
       },
       {
         "availability": "always",
@@ -1016,7 +1016,7 @@
         "id": "command:bg-update",
         "kind": "command",
         "name": "bg-update",
-        "source": "src/extension.ts:963"
+        "source": "src/extension.ts:959"
       },
       {
         "availability": "feature:attribution",
@@ -1052,7 +1052,7 @@
         "id": "command:jobs",
         "kind": "command",
         "name": "jobs",
-        "source": "src/extension.ts:1015"
+        "source": "src/extension.ts:1011"
       },
       {
         "availability": "always",
@@ -1061,7 +1061,7 @@
         "id": "command:kill",
         "kind": "command",
         "name": "kill",
-        "source": "src/extension.ts:1062"
+        "source": "src/extension.ts:1058"
       },
       {
         "availability": "always",
@@ -1070,7 +1070,7 @@
         "id": "command:logs",
         "kind": "command",
         "name": "logs",
-        "source": "src/extension.ts:1030"
+        "source": "src/extension.ts:1026"
       },
       {
         "availability": "always",
@@ -1079,7 +1079,7 @@
         "id": "command:tasks",
         "kind": "command",
         "name": "tasks",
-        "source": "src/extension.ts:939"
+        "source": "src/extension.ts:935"
       }
     ],
     "eventbus": [
@@ -1111,7 +1111,7 @@
         "id": "renderer:background-task-notification",
         "kind": "renderer",
         "name": "background-task-notification",
-        "source": "src/extension.ts:773"
+        "source": "src/extension.ts:769"
       },
       {
         "availability": "feature:fusion",
@@ -1130,7 +1130,7 @@
         "id": "shortcut:ctrl+alt+b",
         "kind": "shortcut",
         "name": "ctrl+alt+b",
-        "source": "src/extension.ts:999"
+        "source": "src/extension.ts:995"
       },
       {
         "availability": "always",
@@ -1139,7 +1139,7 @@
         "id": "shortcut:ctrl+alt+c",
         "kind": "shortcut",
         "name": "ctrl+alt+c",
-        "source": "src/extension.ts:1007"
+        "source": "src/extension.ts:1003"
       },
       {
         "availability": "dock:shift+down",
@@ -1148,7 +1148,7 @@
         "id": "shortcut:shift+down",
         "kind": "shortcut",
         "name": "shift+down",
-        "source": "src/extension.ts:990"
+        "source": "src/extension.ts:986"
       }
     ],
     "tool": [
@@ -1181,7 +1181,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1247"
+        "source": "src/extension.ts:1220"
       },
       {
         "availability": "feature:delegate",
@@ -1296,7 +1296,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1422"
+        "source": "src/extension.ts:1395"
       },
       {
         "availability": "always",
@@ -1332,7 +1332,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1374"
+        "source": "src/extension.ts:1347"
       },
       {
         "availability": "any(feature:delegate,feature:fusion)",
@@ -1376,7 +1376,7 @@
         "name": "bg_run",
         "promptGuidelines": [
           "Use bg_run instead of bash for commands expected to run for a long time, such as test suites, dev servers, watchers, or builds.",
-          "Always set isAgent: true only when the background task launches an LLM/agent process; set isAgent: false for scripts, tests, dev servers, sleeps, and ordinary shell commands.",
+          "Use pi-subagents for agent delegation; bg_run is only for long-running shell commands.",
           "When using bg_run, always set name to a concise 2-6 word human-readable label for the footer task dock; do not use the raw command as the name unless it is already short and meaningful.",
           "bg_run returns immediately. With notifyOnCompletion:true and triggerOnCompletion:true (both defaults), completed, failed, or killed terminal state is delivered as <background-task-notification> and automatically starts a follow-up agent turn.",
           "After a default bg_run launch, continue only independent useful work that does not merely wait for the task; otherwise briefly acknowledge it if useful, then end the current turn. Do not call sleep, bg_status, or bg_logs merely to wait; the terminal notification will wake you.",
@@ -1395,10 +1395,6 @@
               "description": "Optional longer human-readable context for the task",
               "type": "string"
             },
-            "isAgent": {
-              "description": "Required. Set true only when this background task launches an LLM/agent process, such as a child `pi -p ...` or `pi --mode json ...`, so Pi-agent telemetry can be collected. Set false for scripts, tests, servers, sleeps, and ordinary shell commands.",
-              "type": "boolean"
-            },
             "name": {
               "description": "Short human-readable task name shown in the bg footer dock. Required; use 2-6 words, not the raw command.",
               "type": "string"
@@ -1408,7 +1404,7 @@
               "type": "boolean"
             },
             "surviveReload": {
-              "description": "Opt in to retaining this exact ordinary isAgent:false shell execution across a real same-process Pi reload. Default: false. Unsupported for agent, managed, delegate, Fusion, and attested tasks.",
+              "description": "Opt in to retaining this exact shell execution across a real same-process Pi reload. Default: false.",
               "type": "boolean"
             },
             "timeoutSeconds": {
@@ -1422,12 +1418,11 @@
           },
           "required": [
             "command",
-            "isAgent",
             "name"
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1098"
+        "source": "src/extension.ts:1094"
       },
       {
         "availability": "feature:attested",
@@ -1490,7 +1485,7 @@
           ],
           "type": "object"
         },
-        "source": "src/extension.ts:1266"
+        "source": "src/extension.ts:1239"
       },
       {
         "availability": "always",
@@ -1516,7 +1511,7 @@
           "required": [],
           "type": "object"
         },
-        "source": "src/extension.ts:1341"
+        "source": "src/extension.ts:1314"
       },
       {
         "availability": "feature:fusion",

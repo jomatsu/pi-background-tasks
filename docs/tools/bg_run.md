@@ -11,7 +11,7 @@ covers_sources: []
 
 <!-- pi-docs:begin name="tool-contract-bg_run" generator="scripts/docs/generate.mjs" -->
 - Label: **Background Run**
-- Source: `src/extension.ts:1098`
+- Source: `src/extension.ts:1094`
 - Availability: `always`
 - Available by default: **yes**
 - Description: Start a named long-running shell command in the background and return immediately with a task ID and output path. By default, completed, failed, or killed terminal state is delivered automatically as <background-task-notification> and starts a follow-up agent turn; do not sleep or poll merely to wait. Output is written to .pi/tasks and model-visible logs are bounded to 50.0KB.
@@ -21,10 +21,9 @@ covers_sources: []
 | --- | --- | --- | --- | --- |
 | `command` | yes | `string` | Shell command to start in the background |  |
 | `description` | no | `string` | Optional longer human-readable context for the task |  |
-| `isAgent` | yes | `boolean` | Required. Set true only when this background task launches an LLM/agent process, such as a child `pi -p ...` or `pi --mode json ...`, so Pi-agent telemetry can be collected. Set false for scripts, tests, servers, sleeps, and ordinary shell commands. |  |
 | `name` | yes | `string` | Short human-readable task name shown in the bg footer dock. Required; use 2-6 words, not the raw command. |  |
 | `notifyOnCompletion` | no | `boolean` | Whether to deliver the durable terminal notification. Default: true; disable only when deliberately taking over completion monitoring. |  |
-| `surviveReload` | no | `boolean` | Opt in to retaining this exact ordinary isAgent:false shell execution across a real same-process Pi reload. Default: false. Unsupported for agent, managed, delegate, Fusion, and attested tasks. |  |
+| `surviveReload` | no | `boolean` | Opt in to retaining this exact shell execution across a real same-process Pi reload. Default: false. |  |
 | `timeoutSeconds` | no | `number` | Optional timeout; task is failed and killed when exceeded |  |
 | `triggerOnCompletion` | no | `boolean` | Whether that notification should automatically trigger a follow-up agent turn. Default: true for bg_run; requires notifyOnCompletion. |  |
 
@@ -43,10 +42,6 @@ covers_sources: []
       "description": "Optional longer human-readable context for the task",
       "type": "string"
     },
-    "isAgent": {
-      "description": "Required. Set true only when this background task launches an LLM/agent process, such as a child `pi -p ...` or `pi --mode json ...`, so Pi-agent telemetry can be collected. Set false for scripts, tests, servers, sleeps, and ordinary shell commands.",
-      "type": "boolean"
-    },
     "name": {
       "description": "Short human-readable task name shown in the bg footer dock. Required; use 2-6 words, not the raw command.",
       "type": "string"
@@ -56,7 +51,7 @@ covers_sources: []
       "type": "boolean"
     },
     "surviveReload": {
-      "description": "Opt in to retaining this exact ordinary isAgent:false shell execution across a real same-process Pi reload. Default: false. Unsupported for agent, managed, delegate, Fusion, and attested tasks.",
+      "description": "Opt in to retaining this exact shell execution across a real same-process Pi reload. Default: false.",
       "type": "boolean"
     },
     "timeoutSeconds": {
@@ -70,7 +65,6 @@ covers_sources: []
   },
   "required": [
     "command",
-    "isAgent",
     "name"
   ],
   "type": "object"
@@ -84,12 +78,10 @@ Start a named long-running shell command in the background and return immediatel
 
 ## Schema
 
-
 Required public fields:
 
 - `name: string` — concise 2-6 word task name for the footer dock.
 - `command: string` — shell command to run.
-- `isAgent: boolean` — explicit telemetry control; `true` only for LLM/agent processes such as child `pi -p ...` or `pi --mode json ...`.
 
 Optional fields:
 
@@ -97,23 +89,20 @@ Optional fields:
 - `timeoutSeconds: number`
 - `notifyOnCompletion: boolean`
 - `triggerOnCompletion: boolean`
-- `surviveReload: boolean` — opt in only for ordinary `isAgent:false` shell work that must keep the same live execution across a supported real reload.
+- `surviveReload: boolean` — retain the same live shell execution across a supported real reload.
 
-Legacy argument preparation can derive a missing `name` from `description` or `command`, but the public schema remains strict and requires `name`, `command`, and `isAgent`.
+Legacy argument preparation can derive a missing `name` from `description` or `command`, but the public schema requires `name` and `command`. The TypeBox object remains open (no `additionalProperties:false`): legacy extra arguments, including `isAgent`, are accepted and ignored. Every `bg_run` task uses the ordinary shell path, without agent telemetry wrapping.
 
 ## When to use
 
-Use for long-running tests, builds, servers, watchers, sleeps, and child agent work. Do not use normal foreground shell tools for commands expected to outlive the current turn.
-
-For an Anthropic child `pi`, keep normal extension discovery enabled when parent ambient attribution is enabled. Do not pass `--no-extensions` unless the command also explicitly loads this package's always-on `extensions/anthropic-attribution-child.ts` with `-e`/`--extension`.
+Use for long-running tests, builds, servers, watchers, and other shell commands. Use the separate `pi-subagents` extension for agent delegation, not `bg_run`.
 
 ## Defaults
 
 - `notifyOnCompletion`: `true`.
 - `triggerOnCompletion`: `true`.
 - `timeoutSeconds`: absent means no timeout.
-- `isAgent`: no default in the tool contract; callers must provide a boolean. It is not inferred from command text.
-- `surviveReload`: `false`. True is valid only with `isAgent:false` and never changes the default for other launches.
+- `surviveReload`: `false`.
 
 ## Shell selection and guidance
 
@@ -132,19 +121,15 @@ An opted ordinary task crosses a supported real same-process reload as the same 
 ## Examples
 
 ```json
-{"name":"Docs build","command":"npm run docs","isAgent":false}
+{"name":"Docs build","command":"npm run docs"}
 ```
 
 ```json
-{"name":"Child summary","command":"pi -p 'summarize changes'","isAgent":true,"timeoutSeconds":600}
+{"name":"Manual server","command":"npm run dev","notifyOnCompletion":false,"triggerOnCompletion":false}
 ```
 
 ```json
-{"name":"Manual server","command":"npm run dev","isAgent":false,"notifyOnCompletion":false,"triggerOnCompletion":false}
-```
-
-```json
-{"name":"Reload-safe watcher","command":"npm run watch","isAgent":false,"surviveReload":true}
+{"name":"Reload-safe watcher","command":"npm run watch","surviveReload":true}
 ```
 
 ## Output/result
@@ -161,28 +146,25 @@ Automatic follow-up turn: enabled.
 ...
 ```
 
-Structured details include `task`, a snapshot with command, status, output path, cwd, timing, pid, byte count, `isAgent`, `surviveReload`, optional non-authoritative `reloadSurvival` audit facts, delivery flags, the non-secret `shellPolicy` (`policy`, `executable`, `argvPrefix`, `dialect`) for ordinary shell tasks, telemetry fields when available, and error when present.
+Structured details include `task`, a snapshot with command, status, output path, cwd, timing, pid, byte count, `isAgent` (always false), `surviveReload`, optional non-authoritative `reloadSurvival` audit facts, delivery flags, the non-secret `shellPolicy` (`policy`, `executable`, `argvPrefix`, `dialect`) for ordinary shell tasks, telemetry fields when available, and error when present.
 
 ## Errors
 
 - Missing/non-object args in preparation: `bg_run arguments must be an object`.
 - Missing command: `bg_run requires command string`.
-- Missing `isAgent`: loud error explaining true/false use.
 - Empty command at execution: `Background command is empty`.
 - Invalid explicit POSIX shell mode/path or an unavailable requested Bash/sh route fails loudly without fallback.
-- A malformed survival value fails as `pi_bg_survive_reload_invalid`; true with `isAgent:true` fails as `pi_bg_survive_reload_requires_non_agent`, both before side effects.
+- A malformed survival value fails as `pi_bg_survive_reload_invalid` before side effects.
 - Missing/stale/conflicting/incompatible activation ownership fails with a stable `pi_bg_reload_owner_*` code. A handoff that receives no compatible claimant reaches fixed-deadline cleanup as `pi_bg_reload_handoff_expired`.
 - Shell/spawn/timeout/output-cap failures become loud task failures.
 
 ## Runtime artifacts
 
-Creates `.pi/tasks/<session-id>-<pid>/<task-id>.output` and `.json`; the JSON records the actual ordinary-task shell policy. If `isAgent:true`, the command matches an interceptable `pi -p`, `pi --print`, or `pi --mode json` invocation, and the resolved shell supports POSIX function syntax, a temporary telemetry wrapper file is also written in the task directory. Unknown/non-POSIX inherited shells are left unwrapped with a diagnostic.
+Creates `.pi/tasks/<session-id>-<pid>/<task-id>.output` and `.json`; the JSON records the actual ordinary-task shell policy. No agent telemetry wrapper is created by `bg_run`.
 
 ## Safety boundaries
 
-The command runs through the platform shell and is not sandboxed. Use `isAgent:true` only to request Pi-agent telemetry wrapping; setting it does not make execution safer. Model-visible logs are bounded and point to the full output path.
-
-`bg_run` does not parse or repair arbitrary child `pi` argv. An Anthropic command that uses `--no-extensions` without explicitly loading the attribution extension bypasses the package's attribution/sanitization contract and is unsupported.
+The command runs through the platform shell and is not sandboxed. Model-visible logs are bounded and point to the full output path.
 
 ## Related docs
 
@@ -192,7 +174,6 @@ The command runs through the platform shell and is not sandboxed. Use `isAgent:t
 - [`bg_kill`](bg_kill.md)
 - [`/bg`](../commands/bg.md)
 - [Background task runtime](../subsystems/background-task-runtime.md)
-- [Anthropic attribution](../subsystems/anthropic-attribution.md)
 
 ## Source ownership/reference
 

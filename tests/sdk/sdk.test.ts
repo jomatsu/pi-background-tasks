@@ -6,6 +6,7 @@ import { existsSync } from 'node:fs';
 import { delimiter, dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createServer } from 'node:http';
+import { validateToolArguments } from '@earendil-works/pi-ai';
 import {
   ModelRuntime,
   createAgentSession,
@@ -140,9 +141,8 @@ interface CustomNotificationEntry {
 }
 
 interface PreparedBgRunArgs extends JsonObject {
-  name?: string;
-  command?: string;
-  isAgent: boolean;
+  name: string;
+  command: string;
 }
 
 interface UiNotification {
@@ -212,9 +212,8 @@ function isCustomNotificationEntry(value: unknown): value is CustomNotificationE
 function isPreparedBgRunArgs(value: unknown): value is PreparedBgRunArgs {
   return (
     isJsonObject(value) &&
-    typeof value['isAgent'] === 'boolean' &&
-    (value['name'] === undefined || typeof value['name'] === 'string') &&
-    (value['command'] === undefined || typeof value['command'] === 'string')
+    typeof value['name'] === 'string' &&
+    typeof value['command'] === 'string'
   );
 }
 
@@ -459,6 +458,24 @@ async function startRegistry(
   };
 }
 
+async function runAgentCommand(
+  session: AgentSession,
+  name: string,
+  command: string,
+): Promise<BgTaskSnapshot> {
+  const bg = session.extensionRunner
+    .getRegisteredCommands()
+    .find((cmd) => cmd.invocationName === 'bg');
+  assert.ok(bg);
+  await bg.handler(
+    `--agent --name "${name}" ${command}`,
+    session.extensionRunner.createCommandContext(),
+  );
+  const task = tasksFromResult(await exec(session, 'bg_status', {})).find((task) => task.name === name);
+  assert.ok(task, `missing /bg task ${name}`);
+  return task;
+}
+
 async function renderFooterViaJobs(session: AgentSession): Promise<void> {
   const jobs = session.extensionRunner
     .getRegisteredCommands()
@@ -546,13 +563,21 @@ void describe('sdk', () => {
       const bgRunParams: unknown = bgRunTool.parameters;
       assert.ok(isJsonObject(bgRunParams), 'bg_run schema should be an object');
       const required = bgRunParams['required'];
-      assert.ok(
-        Array.isArray(required) && required.includes('isAgent'),
-        'bg_run schema must require isAgent',
+      assert.deepEqual(required, ['name', 'command']);
+      const properties = requiredJsonObject(bgRunParams['properties'], 'schema properties');
+      assert.equal(Object.hasOwn(properties, 'isAgent'), false);
+      assert.notEqual(bgRunParams['additionalProperties'], false);
+      const modelFacing = JSON.stringify({
+        parameters: bgRunParams,
+        description: bgRunTool.description,
+        snippet: bgRunTool.promptSnippet,
+        guidelines: bgRunTool.promptGuidelines,
+      });
+      assert.doesNotMatch(
+        modelFacing,
+        /isAgent|pi -p|pi --mode|child agents?|launch(?:es|ing)? an? (?:LLM|agent)/i,
       );
-      const properties = bgRunParams['properties'];
-      const isAgentSchema = isJsonObject(properties) ? properties['isAgent'] : bgRunParams;
-      assert.match(JSON.stringify(isAgentSchema), /LLM\/agent/);
+      assert.match(modelFacing, /Use pi-subagents for agent delegation/);
       const cmds = session.extensionRunner.getRegisteredCommands().map((c) => c.invocationName);
       for (const cmd of [
         'bg',
@@ -571,7 +596,6 @@ void describe('sdk', () => {
       assert.ok(shortcuts.has('ctrl+alt+c'));
 
       const r = await exec(session, 'bg_run', {
-        isAgent: false,
         name: 'SDK Echo',
         command: 'echo sdk-ok',
         notifyOnCompletion: false,
@@ -1330,7 +1354,7 @@ console.error('sdk stderr');
     }
   });
 
-  void it('wraps explicitly marked background Pi agents and captures context telemetry', async (t) => {
+  void it('ignores legacy bg_run agent flags and preserves /bg --agent telemetry', async (t) => {
     if (skipWin32PosixPiTelemetry(t)) return;
     const { session, cwd } = await harness();
     const oldPath = process.env['PATH'];
@@ -1342,6 +1366,10 @@ console.error('sdk stderr');
         fakePi,
         `#!/usr/bin/env node
 const args = process.argv.slice(2);
+if (args.includes("legacy-shell-only")) {
+  console.log(JSON.stringify(args));
+  process.exit(0);
+}
 if (!args.includes("--mode") || args[args.indexOf("--mode") + 1] !== "json") {
   console.error("expected --mode json: " + JSON.stringify(args));
   process.exit(3);
@@ -1378,14 +1406,26 @@ console.log(JSON.stringify({ type: "message_end", message: secondMessage }));
       await chmod(fakePi, 0o755);
       process.env['PATH'] = `${bin}${delimiter}${oldPath ?? ''}`;
 
-      const r = await exec(session, 'bg_run', {
+      const legacyResult = await exec(session, 'bg_run', {
+        name: 'Legacy shell only',
+        command: 'pi -p legacy-shell-only',
         isAgent: true,
-        name: 'Wrapped Pi Agent',
-        command: 'pi --model openai-codex/gpt-5.5 -p hello',
         notifyOnCompletion: false,
         triggerOnCompletion: false,
       });
-      const t = await wait(session, taskFromResult(r).id);
+      const legacyTask = await wait(session, taskFromResult(legacyResult).id);
+      assert.equal(legacyTask.status, 'completed');
+      assert.equal(legacyTask.isAgent, false);
+      assert.equal(legacyTask.tokenUsage, undefined);
+      const wrapperPath = join(cwd, legacyTask.outputPath.replace(/\.output$/, '.pi-telemetry-wrapper.cjs'));
+      assert.equal(existsSync(wrapperPath), false);
+      const legacyLogs = await exec(session, 'bg_logs', { taskId: legacyTask.id });
+      assert.match(resultText(legacyLogs), /\["-p","legacy-shell-only"\]/);
+
+      const task = await runAgentCommand(
+        session, 'Wrapped Pi Agent', 'pi --model openai-codex/gpt-5.5 -p hello',
+      );
+      const t = await wait(session, task.id);
       assert.equal(t.status, 'completed');
       assert.deepEqual(t.contextUsage, {
         tokens: 360,
@@ -1430,7 +1470,7 @@ console.log(JSON.stringify({ type: "message_end", message: secondMessage }));
   });
 
   void it(
-    'wraps an explicitly marked real child Pi and counts JSON token/tool telemetry',
+    'wraps a real /bg --agent Pi command and counts JSON token/tool telemetry',
     { timeout: 20_000 },
     async (t) => {
       if (process.platform === 'win32') {
@@ -1462,14 +1502,8 @@ console.log(JSON.stringify({ type: "message_end", message: secondMessage }));
           .map(([key, value]) => `${key}=${shellQuote(value)}`)
           .join(' ');
         const command = `${envPrefix} pi --offline --no-session --no-extensions -e ${shellQuote(scriptedProviderPath)} --no-skills --no-prompt-templates --no-context-files --model pi-bg-scripted/scripted-model -p ${shellQuote('exercise real json tool telemetry')}`;
-        const r = await exec(session, 'bg_run', {
-          isAgent: true,
-          name: 'Real Pi Telemetry',
-          command,
-          notifyOnCompletion: false,
-          triggerOnCompletion: false,
-        });
-        const t = await wait(session, taskFromResult(r).id, 240);
+        const task = await runAgentCommand(session, 'Real Pi Telemetry', command);
+        const t = await wait(session, task.id, 240);
         assert.equal(t.status, 'completed');
         assert.deepEqual(t.tokenUsage, {
           input: 20,
@@ -1629,21 +1663,25 @@ console.log(JSON.stringify({ type: "message_end", message: secondMessage }));
         tool.prepareArguments({ command: 'npm run qa', description: 'Legacy QA', isAgent: false }),
       );
       assert.equal(prepared.name, 'Legacy QA');
-      assert.equal(prepared.isAgent, false);
-      const agent = requiredPrepared(
-        tool.prepareArguments({ name: 'Legacy Agent', command: 'pi -p hi', isAgent: true }),
-      );
-      assert.equal(agent.isAgent, true);
-      assert.throws(
-        () => tool.prepareArguments?.({ command: 'pnpm test' }),
-        /requires isAgent boolean/,
-      );
+      assert.equal(Object.hasOwn(prepared, 'isAgent'), false);
+      const legacy = { name: 'Legacy Flag', command: 'echo legacy-ok', isAgent: true };
+      // Validate the raw legacy call too, before prepareArguments strips unknown fields.
+      const validated: unknown = validateToolArguments(tool, {
+        type: 'toolCall',
+        id: 'legacy',
+        name: 'bg_run',
+        arguments: legacy,
+      });
+      const ignored = requiredPrepared(tool.prepareArguments(validated));
+      assert.equal(Object.hasOwn(ignored, 'isAgent'), false);
+      const result = await exec(session, 'bg_run', validated);
+      const legacyTask = await wait(session, taskFromResult(result).id);
+      assert.equal(legacyTask.status, 'completed');
+      assert.equal(legacyTask.isAgent, false);
+      const plain = requiredPrepared(tool.prepareArguments({ command: 'pnpm test' }));
+      assert.equal(plain.name, 'pnpm test');
       assert.throws(() => tool.prepareArguments?.(null), /arguments must be an object/);
-      const invalid = { name: 'Background task', command: '', isAgent: false };
-      await assert.rejects(
-        () => exec(session, 'bg_run', { name: 'Missing Agent Flag', command: 'echo ok' }),
-        /requires isAgent boolean/,
-      );
+      const invalid = { name: 'Background task', command: '' };
       await assert.rejects(() => exec(session, 'bg_run', invalid), /Background command is empty/);
     } finally {
       await session.extensionRunner.emit({ type: 'session_shutdown', reason: 'quit' });

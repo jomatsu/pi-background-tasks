@@ -570,16 +570,18 @@ void describe('real Pi reload shell survival', { concurrency: false }, () => {
         await waitFor(() => !pidExists(copiedPid as number), 'default reload child exit');
       }
 
-      await assert.rejects(
-        () =>
-          execute(h.session, 'bg_run', {
-            name: 'Agent refusal',
-            command: 'pi -p nope',
-            isAgent: true,
-            surviveReload: true,
-          }),
-        /pi_bg_survive_reload_requires_non_agent/u,
+      const legacy = taskFrom(
+        await execute(h.session, 'bg_run', {
+          name: 'Legacy flag ignored',
+          command: 'echo legacy-survival',
+          isAgent: true,
+          surviveReload: true,
+          notifyOnCompletion: false,
+          triggerOnCompletion: false,
+        }),
       );
+      assert.equal(legacy.isAgent, false);
+      assert.equal(legacy.surviveReload, true);
       const attested = h.session.getToolDefinition('bg_run_pi_attested');
       assert.ok(attested?.prepareArguments);
       assert.throws(
