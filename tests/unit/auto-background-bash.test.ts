@@ -223,6 +223,10 @@ void describe("bash auto-background configuration", () => {
   void it("defaults to 60 seconds and accepts seconds or off", () => {
     assert.equal(parseBashAutoBackgroundMs({}), 60_000);
     assert.equal(
+      parseBashAutoBackgroundMs({ PI_SUBAGENT_CHILD: "1", PI_BG_BASH_AUTO_BACKGROUND_SECONDS: "5" }),
+      0,
+    );
+    assert.equal(
       parseBashAutoBackgroundMs({ PI_BG_BASH_AUTO_BACKGROUND_SECONDS: "15" }),
       15_000,
     );
