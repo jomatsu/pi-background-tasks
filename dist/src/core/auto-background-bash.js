@@ -43,6 +43,8 @@ export const PI_BG_DEFAULT_BASH_AUTO_BACKGROUND_SECONDS = 60;
  * disables the bash override). Defaults to 60 seconds.
  */
 export function parseBashAutoBackgroundMs(env = process.env) {
+    if (env["PI_SUBAGENT_CHILD"] === "1")
+        return 0;
     const raw = env["PI_BG_BASH_AUTO_BACKGROUND_SECONDS"];
     if (raw === undefined)
         return PI_BG_DEFAULT_BASH_AUTO_BACKGROUND_SECONDS * 1000;

@@ -132,11 +132,13 @@ export const PI_BG_DEFAULT_BASH_AUTO_BACKGROUND_SECONDS = 60;
 
 /**
  * Foreground window from `PI_BG_BASH_AUTO_BACKGROUND_SECONDS` (whole seconds; `0` or `off`
- * disables the bash override). Defaults to 60 seconds.
+ * disables the bash override). Defaults to 60 seconds. Subagent children (`PI_SUBAGENT_CHILD=1`)
+ * always get 0: they run headless over RPC, so a backgrounded command ends their turn unread.
  */
 export function parseBashAutoBackgroundMs(
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): number {
+  if (env["PI_SUBAGENT_CHILD"] === "1") return 0;
   const raw = env["PI_BG_BASH_AUTO_BACKGROUND_SECONDS"];
   if (raw === undefined)
     return PI_BG_DEFAULT_BASH_AUTO_BACKGROUND_SECONDS * 1000;
